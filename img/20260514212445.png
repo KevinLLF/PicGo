@@ -1,0 +1,341 @@
+CREATE TABLE IF NOT EXISTS ${DWD_DB}.dwd_voc_data_info (
+    item_id              STRING   COMMENT 'item_id',
+    org_id               STRING   COMMENT '原始id',
+    mid                  STRING   COMMENT 'id',
+    title                STRING   COMMENT '标题',
+    content              STRING   COMMENT '正文',
+    ctime                BIGINT   COMMENT '创建时间',
+    utime                BIGINT   COMMENT '修改时间',
+    author_uid           STRING   COMMENT '作者id',
+    author_name          STRING   COMMENT '作者姓名',
+    author_mobile        STRING   COMMENT '作者手机号',
+    author_province      STRING   COMMENT '作者省份',
+    author_city          STRING   COMMENT '作者城市',
+    like_count           BIGINT   COMMENT '点赞数',
+    reply_count          BIGINT   COMMENT '评论数',
+    repost_count         BIGINT   COMMENT '转发数',
+    view_count           BIGINT   COMMENT '浏览数',
+    share_count          BIGINT   COMMENT '分享/收藏数',
+    site_name            STRING   COMMENT '来源平台名',
+    voc_data_category    STRING   COMMENT '数据分类',
+    voc_source_scope     STRING   COMMENT '数据公私域来源',
+    wtype                BIGINT   COMMENT '文章发表类型'
+)
+COMMENT 'VOC数据明细宽表'
+PARTITIONED BY (
+    dt              STRING  COMMENT '数据日期分区, 格式yyyy-MM-dd',
+    source_channel  STRING  COMMENT '来源渠道, 对应ODS源表名'
+)
+STORED AS PARQUET;
+
+
+INSERT INTO TABLE ${DWD_DB}.dwd_voc_data_info
+PARTITION (dt, source_channel)
+SELECT
+    md5(concat('ods_aionapp_article', id))                                       AS item_id,
+    concat('ods_aionapp_article', id)                                           AS org_id,
+    md5(concat('ods_aionapp_article', id))                                      AS mid,
+    title                                                                       AS title,
+    description                                                                 AS content,
+    unix_timestamp(publish_time) * 1000                                         AS ctime,
+    unix_timestamp(update_time) * 1000                                          AS utime,
+    cast(publisher as string)                                                   AS author_uid,
+    NULL                                                                        AS author_name,
+    publisher_mobile                                                            AS author_mobile,
+    province                                                                    AS author_province,
+    city                                                                        AS author_city,
+    0                                                                           AS like_count,
+    0                                                                           AS reply_count,
+    0                                                                           AS repost_count,
+    basic_views                                                                 AS view_count,
+    0                                                                           AS share_count,
+    '埃安APP'                                                                    AS site_name,
+    'review'                                                                    AS voc_data_category,
+    'private'                                                                   AS voc_source_scope,
+    1                                                                           AS wtype,
+    '${azkaban.flow.1.days.ago}'                                                  AS dt,
+    'ods_aionapp_article'                                                       AS source_channel
+FROM ${SRC_ODS_DB}.ods_aionapp_article
+WHERE to_date(publish_time) = '${azkaban.flow.1.days.ago}'
+    AND id IS NOT NULL
+    AND description IS NOT NULL
+
+UNION ALL
+
+SELECT
+    md5(concat('ods_aionapp_cms_comment', id))                                  AS item_id,
+    concat('ods_aionapp_cms_comment', id)                                      AS org_id,
+    md5(concat('ods_aionapp_cms_comment', id))                                 AS mid,
+    NULL                                                                        AS title,
+    content                                                                     AS content,
+    unix_timestamp(create_time) * 1000                                          AS ctime,
+    unix_timestamp(update_time) * 1000                                          AS utime,
+    cast(user_id as string)                                                     AS author_uid,
+    nick_name                                                                   AS author_name,
+    mobile                                                                      AS author_mobile,
+    NULL                                                                        AS author_province,
+    NULL                                                                        AS author_city,
+    actual_liked_count                                                          AS like_count,
+    0                                                                           AS reply_count,
+    0                                                                           AS repost_count,
+    0                                                                           AS view_count,
+    0                                                                           AS share_count,
+    '埃安APP'                                                                    AS site_name,
+    'review'                                                                    AS voc_data_category,
+    'private'                                                                   AS voc_source_scope,
+    3                                                                           AS wtype,
+    '${azkaban.flow.1.days.ago}'                                                  AS dt,
+    'ods_aionapp_cms_comment'                                                   AS source_channel
+FROM ${SRC_ODS_DB}.ods_aionapp_cms_comment
+WHERE to_date(create_time) = '${azkaban.flow.1.days.ago}'
+    AND id IS NOT NULL
+    AND content IS NOT NULL
+
+UNION ALL
+
+SELECT
+    md5(concat('ods_aionapp_dynamic_base', id))                                 AS item_id,
+    concat('ods_aionapp_dynamic_base', id)                                     AS org_id,
+    md5(concat('ods_aionapp_dynamic_base', id))                                AS mid,
+    NULL                                                                        AS title,
+    content                                                                     AS content,
+    unix_timestamp(create_time) * 1000                                          AS ctime,
+    unix_timestamp(update_time) * 1000                                          AS utime,
+    cast(user_id as string)                                                     AS author_uid,
+    nick_name                                                                   AS author_name,
+    mobile                                                                      AS author_mobile,
+    NULL                                                                        AS author_province,
+    NULL                                                                        AS author_city,
+    liked_number                                                                AS like_count,
+    comment_number                                                              AS reply_count,
+    0                                                                           AS repost_count,
+    0                                                                           AS view_count,
+    0                                                                           AS share_count,
+    '埃安APP'                                                                    AS site_name,
+    'review'                                                                    AS voc_data_category,
+    'private'                                                                   AS voc_source_scope,
+    3                                                                           AS wtype,
+    '${azkaban.flow.1.days.ago}'                                                  AS dt,
+    'ods_aionapp_dynamic_base'                                                  AS source_channel
+FROM ${SRC_ODS_DB}.ods_aionapp_dynamic_base
+WHERE to_date(create_time) = '${azkaban.flow.1.days.ago}'
+    AND id IS NOT NULL
+    AND content IS NOT NULL
+
+UNION ALL
+
+SELECT
+    md5(concat('ods_hyperapp_article', id))                                     AS item_id,
+    concat('ods_hyperapp_article', id)                                         AS org_id,
+    md5(concat('ods_hyperapp_article', id))                                    AS mid,
+    title                                                                       AS title,
+    description                                                                 AS content,
+    unix_timestamp(publish_time) * 1000                                         AS ctime,
+    unix_timestamp(update_time) * 1000                                          AS utime,
+    cast(publisher as string)                                                   AS author_uid,
+    creation_name                                                               AS author_name,
+    publisher_mobile                                                            AS author_mobile,
+    province                                                                    AS author_province,
+    city                                                                        AS author_city,
+    0                                                                           AS like_count,
+    0                                                                           AS reply_count,
+    0                                                                           AS repost_count,
+    basic_views                                                                 AS view_count,
+    0                                                                           AS share_count,
+    '昊铂APP'                                                                    AS site_name,
+    'review'                                                                    AS voc_data_category,
+    'private'                                                                   AS voc_source_scope,
+    1                                                                           AS wtype,
+    '${azkaban.flow.1.days.ago}'                                                  AS dt,
+    'ods_hyperapp_article'                                                      AS source_channel
+FROM ${SRC_ODS_DB}.ods_hyperapp_article
+WHERE to_date(publish_time) = '${azkaban.flow.1.days.ago}'
+    AND id IS NOT NULL
+    AND description IS NOT NULL
+
+UNION ALL
+
+SELECT
+    md5(concat('ods_hyperapp_cms_comment', id))                                 AS item_id,
+    concat('ods_hyperapp_cms_comment', id)                                     AS org_id,
+    md5(concat('ods_hyperapp_cms_comment', id))                                AS mid,
+    NULL                                                                        AS title,
+    content                                                                     AS content,
+    unix_timestamp(create_time) * 1000                                          AS ctime,
+    unix_timestamp(update_time) * 1000                                          AS utime,
+    cast(user_id as string)                                                     AS author_uid,
+    nick_name                                                                   AS author_name,
+    mobile                                                                      AS author_mobile,
+    NULL                                                                        AS author_province,
+    NULL                                                                        AS author_city,
+    actual_liked_count                                                          AS like_count,
+    0                                                                           AS reply_count,
+    0                                                                           AS repost_count,
+    0                                                                           AS view_count,
+    0                                                                           AS share_count,
+    '昊铂APP'                                                                    AS site_name,
+    'review'                                                                    AS voc_data_category,
+    'private'                                                                   AS voc_source_scope,
+    3                                                                           AS wtype,
+    '${azkaban.flow.1.days.ago}'                                                  AS dt,
+    'ods_hyperapp_cms_comment'                                                  AS source_channel
+FROM ${SRC_ODS_DB}.ods_hyperapp_cms_comment
+WHERE to_date(create_time) = '${azkaban.flow.1.days.ago}'
+    AND id IS NOT NULL
+    AND content IS NOT NULL
+
+UNION ALL
+
+SELECT
+    md5(concat('ods_hyperapp_dynamic_base', id))                                AS item_id,
+    concat('ods_hyperapp_dynamic_base', id)                                    AS org_id,
+    md5(concat('ods_hyperapp_dynamic_base', id))                               AS mid,
+    NULL                                                                        AS title,
+    content                                                                     AS content,
+    unix_timestamp(create_time) * 1000                                          AS ctime,
+    unix_timestamp(update_time) * 1000                                          AS utime,
+    cast(user_id as string)                                                     AS author_uid,
+    nick_name                                                                   AS author_name,
+    mobile                                                                      AS author_mobile,
+    NULL                                                                        AS author_province,
+    NULL                                                                        AS author_city,
+    liked_number                                                                AS like_count,
+    comment_number                                                              AS reply_count,
+    0                                                                           AS repost_count,
+    0                                                                           AS view_count,
+    0                                                                           AS share_count,
+    '昊铂APP'                                                                    AS site_name,
+    'review'                                                                    AS voc_data_category,
+    'private'                                                                   AS voc_source_scope,
+    3                                                                           AS wtype,
+    '${azkaban.flow.1.days.ago}'                                                  AS dt,
+    'ods_hyperapp_dynamic_base'                                                 AS source_channel
+FROM ${SRC_ODS_DB}.ods_hyperapp_dynamic_base
+WHERE to_date(create_time) = '${azkaban.flow.1.days.ago}'
+    AND id IS NOT NULL
+    AND content IS NOT NULL
+
+UNION ALL
+
+SELECT
+    md5(concat('ods_trumpchi_community_post', post_id))                          AS item_id,
+    concat('ods_trumpchi_community_post', post_id)                              AS org_id,
+    md5(concat('ods_trumpchi_community_post', post_id))                         AS mid,
+    post_title                                                                  AS title,
+    content                                                                     AS content,
+    unix_timestamp(published_time) * 1000                                       AS ctime,
+    unix_timestamp(updated_time) * 1000                                         AS utime,
+    cast(user_id as string)                                                     AS author_uid,
+    NULL                                                                        AS author_name,
+    NULL                                                                        AS author_mobile,
+    NULL                                                                        AS author_province,
+    NULL                                                                        AS author_city,
+    post_praise_count                                                           AS like_count,
+    post_reply_count                                                            AS reply_count,
+    post_forward_count                                                          AS repost_count,
+    post_show_count                                                             AS view_count,
+    post_share_count                                                            AS share_count,
+    '传祺社区'                                                                   AS site_name,
+    'review'                                                                    AS voc_data_category,
+    'private'                                                                   AS voc_source_scope,
+    1                                                                           AS wtype,
+    '${azkaban.flow.1.days.ago}'                                                  AS dt,
+    'ods_trumpchi_community_post'                                               AS source_channel
+FROM ${SRC_ODS_DB}.ods_trumpchi_community_post
+WHERE to_date(published_time) = '${azkaban.flow.1.days.ago}'
+    AND post_id IS NOT NULL
+    AND content IS NOT NULL
+
+UNION ALL
+
+SELECT
+    md5(concat('ods_trumpchi_channel_question', question_id))                    AS item_id,
+    concat('ods_trumpchi_channel_question', question_id)                        AS org_id,
+    md5(concat('ods_trumpchi_channel_question', question_id))                   AS mid,
+    NULL                                                                        AS title,
+    question_content                                                            AS content,
+    unix_timestamp(create_time) * 1000                                          AS ctime,
+    unix_timestamp(update_time) * 1000                                          AS utime,
+    cast(user_id as string)                                                    	AS author_uid,
+    NULL                                                                        AS author_name,
+    NULL                                                                        AS author_mobile,
+    NULL                                                                        AS author_province,
+    NULL                                                                        AS author_city,
+    0                                                                           AS like_count,
+    0                                                                           AS reply_count,
+    0                                                                           AS repost_count,
+    browse_count                                                                AS view_count,
+    0                                                                           AS share_count,
+    '传祺渠道提问'                                                               AS site_name,
+    'review'                                                                    AS voc_data_category,
+    'private'                                                                   AS voc_source_scope,
+    1                                                                           AS wtype,
+    '${azkaban.flow.1.days.ago}'                                                  AS dt,
+    'ods_trumpchi_channel_question'                                             AS source_channel
+FROM ${SRC_ODS_DB}.ods_trumpchi_channel_question
+WHERE to_date(create_time) = '${azkaban.flow.1.days.ago}'
+    AND question_id IS NOT NULL
+    AND question_content IS NOT NULL
+
+UNION ALL
+
+SELECT
+    md5(concat('ods_trumpchi_mix_oa_order', number))                            AS item_id,
+    concat('ods_trumpchi_mix_oa_order', number)                                AS org_id,
+    md5(concat('ods_trumpchi_mix_oa_order', number))                           AS mid,
+    theme                                                                       AS title,
+    call_content_process_require                                                AS content,
+    unix_timestamp(issue_time) * 1000                                           AS ctime,
+    unix_timestamp(issue_time) * 1000                                           AS utime,
+    cast(customer_number as string)                                             AS author_uid,
+    customer_name                                                               AS author_name,
+    contact_phone                                                               AS author_mobile,
+    province                                                                    AS author_province,
+    city                                                                        AS author_city,
+    0                                                                           AS like_count,
+    0                                                                           AS reply_count,
+    0                                                                           AS repost_count,
+    0                                                                           AS view_count,
+    0                                                                           AS share_count,
+    '传祺工单'                                                                   AS site_name,
+    'complaint'                                                                 AS voc_data_category,
+    'private'                                                                   AS voc_source_scope,
+    1                                                                           AS wtype,
+    '${azkaban.flow.1.days.ago}'                                                  AS dt,
+    'ods_trumpchi_mix_oa_order'                                                 AS source_channel
+FROM ${SRC_ODS_DB}.ods_trumpchi_mix_oa_order
+WHERE to_date(issue_time) = '${azkaban.flow.1.days.ago}'
+    AND number IS NOT NULL
+    AND call_content_process_require IS NOT NULL
+
+UNION ALL
+
+SELECT
+    md5(concat('ods_aion_work_order', order_no))                                AS item_id,
+    concat('ods_aion_work_order', order_no)                                    AS org_id,
+    md5(concat('ods_aion_work_order', order_no))                               AS mid,
+    title                                                                       AS title,
+    content                                                                     AS content,
+    unix_timestamp(create_time) * 1000                                          AS ctime,
+    unix_timestamp(update_time) * 1000                                          AS utime,
+    cast(client_id as string)                                                   AS author_uid,
+    client_name                                                                 AS author_name,
+    client_mobile                                                               AS author_mobile,
+    NULL                                                                        AS author_province,
+    NULL                                                                        AS author_city,
+    0                                                                           AS like_count,
+    0                                                                           AS reply_count,
+    0                                                                           AS repost_count,
+    0                                                                           AS view_count,
+    0                                                                           AS share_count,
+    '埃安工单'                                                                   AS site_name,
+    'complaint'                                                                 AS voc_data_category,
+    'private'                                                                   AS voc_source_scope,
+    1                                                                           AS wtype,
+    '${azkaban.flow.1.days.ago}'                                                  AS dt,
+    'ods_aion_work_order'                                                       AS source_channel
+FROM ${SRC_ODS_DB}.ods_aion_work_order
+WHERE to_date(create_time) = '${azkaban.flow.1.days.ago}'
+    AND order_no IS NOT NULL
+    AND content IS NOT NULL
+;
