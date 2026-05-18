@@ -1,0 +1,341 @@
+# ES (sccc_contact_record_2026) → MySQL (dwd_voc_data_info) 字段映射文档
+
+---
+
+## 一、ES 字段含义推断
+
+基于 ES mapping 中的字段名及 400ans.log 中的 10 条实际数据，推断各字段含义如下：
+
+### 1. 坐席/客服相关
+
+| ES字段 | 类型 | 含义推断 | 示例值 |
+|--------|------|----------|--------|
+| `agentCode` | keyword | 坐席工号（数字编码） | `16641`, `16694`, `16701` |
+| `agentId` | keyword | 坐席唯一标识（UUID） | `96a1c0cd761d4256b5c77fac74d3f914` |
+| `agentName` | keyword | 坐席姓名 | `温雅玉`, `陈政男`, `黄子旋` |
+| `agentNo` | keyword | 坐席编号（完整工号，含机构前缀） | `00001050050316641` |
+| `loginId` | keyword | 坐席登录ID（与agentId相同） | `96a1c0cd761d4256b5c77fac74d3f914` |
+| `jobNumber` | text | 工号（备用字段） | — |
+
+### 2. 组织/租户相关
+
+| ES字段 | 类型 | 含义推断 | 示例值 |
+|--------|------|----------|--------|
+| `orgId` | keyword | 组织/机构唯一ID | `5809cdfa3930439fbf83ba54b9f2e2bc` |
+| `orgName` | keyword | 组织/机构名称 | `客服中心` |
+| `orgCode` | keyword | 组织编码（多级编码，逗号分隔） | `11,16,` |
+| `tenantId` | keyword | 租户ID（多租户隔离） | `00f9e71ecd4544f28ff8113d3ad62700` |
+| `tenantSysExt.phone_number` | text | 租户系统扩展-电话号码 | — |
+
+### 3. 呼叫相关
+
+| ES字段 | 类型 | 含义推断 | 示例值 |
+|--------|------|----------|--------|
+| `callIdDsn` | keyword | 呼叫ID（DSN电话系统生成） | `C20260517219587871` |
+| `callType` | keyword | 呼叫类型（0=呼入, 1=呼出） | `0`, `1` |
+| `callMode` | keyword | 呼叫模式 | — |
+| `callFeature` | keyword | 呼叫特性/功能标识 | — |
+| `callResult` | keyword | 呼叫结果编码（0=成功, 5/6=未接通等） | `0`, `5`, `6` |
+| `callTime` | keyword | 呼叫发起时间（毫秒时间戳，存为字符串） | `1778947848000` |
+| `callProvince` | keyword | 呼叫归属省份 | — |
+| `callProvinceCode` | keyword | 呼叫归属省份编码 | — |
+| `caller` | keyword | 主叫号码 | `14886589070`, `62980386` |
+| `called` | keyword | 被叫号码 | `62980399`, `14867843918` |
+| `mediacode` | keyword | 媒体通道号码（实际通话使用的客户号码） | `14886589070` |
+| `contactdirType` | keyword | 联络方向（0=呼入, 1=呼出） | `0`, `1` |
+| `phoneAddress` | keyword | 电话号码归属地（省份 - 城市） | `广东 - 广州` |
+| `axbBindId` | keyword | AXB隐私号绑定ID | — |
+| `ringTimeLength` | long | 振铃时长（秒） | `4`, `5`, `3`, `7` |
+| `talkTimeLength` | long | 通话时长（秒） | `1`, `214`, `344`, `74` |
+| `talkTimeTotal` | long | 总通话时长（秒，含多次通话合计） | `10`, `232`, `395`, `92` |
+| `idleTimeLength` | keyword | 空闲/等待时长（秒，存为字符串） | `7`, `30`, `19`, `0` |
+| `ifconnected` | keyword | 是否接通（0=未接通, 1=已接通） | `0`, `1` |
+
+### 4. 联络记录核心
+
+| ES字段 | 类型 | 含义推断 | 示例值 |
+|--------|------|----------|--------|
+| `contactId` | keyword | 联络记录唯一ID（S开头+时间戳+序列号） | `S2026051700105331981ca0040548668` |
+| `contactType` | keyword | 联络类型（1=电话） | `1` |
+| `contactTime` | long | 联络发起时间（毫秒时间戳） | `1778947853000` |
+| `contactSourceType` | keyword | 联络来源类型（1=热线渠道） | `1` |
+| `contactSummary` | text | 联络摘要 | — |
+| `answerType` | keyword | 应答类型（0=正常应答） | `0` |
+| `answerTime` | long | 应答时间（毫秒时间戳） | `1778947857000` |
+| `endTime` | long | 通话结束时间（毫秒时间戳） | `1778947858000` |
+| `endType` | keyword | 结束类型（2=正常挂断, 3=其他） | `2`, `3` |
+| `locationId` | keyword | 定位ID（与contactId相同） | `S2026051700105331981ca0040548668` |
+
+### 5. 客户相关
+
+| ES字段 | 类型 | 含义推断 | 示例值 |
+|--------|------|----------|--------|
+| `custName` | keyword | 客户姓名 | `孙娟` |
+| `customermood` | keyword | 客户情绪/满意度评价 | `未评价`, `非常满意` |
+| `satisfyClass` | keyword | 满意度等级（0=未评价/满意） | `0` |
+| `userButton` | keyword | 用户按键评价（0=未按, 1=已按） | `0`, `1` |
+| `repeatcall` | keyword | 是否重复来电（0=否, 1=是） | `0`, `1` |
+| `surveyInfo` | keyword | 满意度调查信息（0=未参与） | `0` |
+
+### 6. 技能组/路由
+
+| ES字段 | 类型 | 含义推断 | 示例值 |
+|--------|------|----------|--------|
+| `skillId` | keyword | 技能组ID | `1171`, `1154` |
+| `skillName` | keyword | 技能组名称 | `救援技能组`, `热线技能组` |
+| `serverModelId` | keyword | 服务模型ID | — |
+| `serverModelName` | keyword | 服务模型名称 | — |
+
+### 7. 服务归档相关
+
+| ES字段 | 类型 | 含义推断 | 示例值 |
+|--------|------|----------|--------|
+| `service_status` | keyword | 服务状态 | `已完成` |
+| `service_summary` | keyword | 服务总结/处理摘要 | 详细描述了客户咨询内容和解答方案 |
+| `service_archived` | keyword | 服务归档分类路径（多级，用/分隔） | `其他3/无声电话2/无声电话1/无声电话` |
+| `service_archived_code` | keyword | 服务归档编码路径（UUID层级，用/分隔） | `9e41849b-.../47e0884a-.../96407034-.../de222c6c-...` |
+| `folow_status` | keyword | 跟进状态 | `当即解决`, `内部跟进` |
+| `folow_room` | keyword | 跟进门店/房间 | `常德武陵`, 空 |
+| `person_responsible` | keyword | 责任人/责任门店 | `常德武陵`, 空 |
+| `floowoption` | keyword | 跟进选项（字段名有拼写错误） | — |
+| `floowresult` | text | 跟进结果 | — |
+| `floowvalue` | keyword | 跟进值 | — |
+
+### 8. 车型/车辆相关
+
+| ES字段 | 类型 | 含义推断 | 示例值 |
+|--------|------|----------|--------|
+| `cars_type` | keyword | 车型名称 | `其他`, `AION RT`, `AION S MAX`, `AION S` |
+
+### 9. 工单相关
+
+| ES字段 | 类型 | 含义推断 | 示例值 |
+|--------|------|----------|--------|
+| `workOrderId` | keyword | 工单ID | — |
+| `workOrderType` | keyword | 工单类型 | — |
+| `workOrderTypeName` | keyword | 工单类型名称 | — |
+| `work_order_name` | keyword | 工单名称 | 空字符串 |
+
+### 10. 任务/外拨相关
+
+| ES字段 | 类型 | 含义推断 | 示例值 |
+|--------|------|----------|--------|
+| `taskId` | keyword | 外拨任务ID | — |
+| `taskBatchId` | keyword | 外拨任务批次ID | — |
+| `taskName` | keyword | 外拨任务名称 | — |
+| `callbackId` | keyword | 回呼坐席ID | `0fb5ad4a1b674ad2a5f1f26bfbf8ca90` |
+| `callbackName` | keyword | 回呼坐席姓名 | `陈政男` |
+| `callbackState` | keyword | 回呼状态 | `0` |
+| `callbackTime` | long | 回呼时间（毫秒时间戳） | `1778952832111` |
+| `transoutObj` | keyword | 转出对象 | — |
+| `transoutTime` | keyword | 转出时间 | — |
+
+### 11. 录音/文件相关
+
+| ES字段 | 类型 | 含义推断 | 示例值 |
+|--------|------|----------|--------|
+| `recordname` | keyword | 录音文件名（路径格式：机构/类型/contactId/序号） | `500503/1/S2026051700105331981ca0040548668/1` |
+| `recordname2` | keyword | 录音文件名2（备用） | — |
+
+### 12. 认证/实名相关
+
+| ES字段 | 类型 | 含义推断 | 示例值 |
+|--------|------|----------|--------|
+| `certificationName` | keyword | 实名认证姓名 | — |
+| `certificationNober` | keyword | 实名认证编号（字段名拼写: Nober→Number） | — |
+| `certificationResult` | keyword | 实名认证结果 | — |
+| `certificationUrl` | keyword | 实名认证URL | — |
+| `authenticationNumber` | keyword | 鉴权号码 | — |
+| `authenticationResult` | keyword | 鉴权结果 | — |
+| `relationResult` | keyword | 关系验证结果 | — |
+
+### 13. 其他字段
+
+| ES字段 | 类型 | 含义推断 | 示例值 |
+|--------|------|----------|--------|
+| `asrContent` | text | ASR语音识别文本内容 | — |
+| `labelName` | text | 标签名称 | — |
+| `remark` | text | 备注 | — |
+| `moreinfomation` | text | 更多信息（字段名拼写: infomation→information） | — |
+| `ifworkflow` | text | 是否走工作流 | — |
+| `isScwf` | keyword | 是否SCWF系统标记 | `0` |
+| `isSendSms` | keyword | 是否发送短信 | — |
+| `is_supplement` | keyword | 是否补录 | `否` |
+| `retSms` | text | 短信回复内容 | — |
+| `ivrConfirm` | keyword | IVR确认 | — |
+| `ivrTrace` | keyword | IVR追踪 | — |
+| `trafficSummary` | keyword | 话务摘要 | — |
+| `trafficSummaryName` | keyword | 话务摘要名称 | — |
+| `msServer` | keyword | 媒体服务器 | — |
+| `modelnum` | keyword | 型号编号 | — |
+| `cnpseccount` | keyword | CNPSEC账号 | — |
+| `cnpsecdepartment` | keyword | CNPSEC部门 | — |
+| `cnpsecname` | keyword | CNPSEC名称 | — |
+
+---
+
+## 二、ES → MySQL 字段映射
+
+目标表：`dwd_voc_data_info`（VOC 私域数据明细宽表）
+
+### 映射总表
+
+| MySQL字段 | MySQL含义 | ES映射字段 | 映射说明 |
+|-----------|-----------|------------|----------|
+| `item_id` | 数据唯一ID | `contactId` | 直接映射，联络记录唯一标识 |
+| `org_id` | 原始ID | `orgId` | 直接映射，坐席所属机构ID |
+| `mid` | 辅助ID | `callIdDsn` | 映射到DSN呼叫系统ID，作为第二个唯一标识 |
+| `title` | 标题 | `service_archived` | 服务归档分类路径作为标题（如"产品/网联系统/网络使用异常/..."） |
+| `content` | 正文 | `service_summary` | 服务总结详情，包含完整的客诉描述和处理方案 |
+| `ctime` | 创建时间 | `contactTime` | 联络创建时间（毫秒时间戳） |
+| `utime` | 修改时间 | `endTime` | 联络结束时间作为最后修改时间（毫秒时间戳） |
+| `author_uid` | 作者ID | `caller` / `mediacode` | 客户电话号码作为用户唯一标识（私域VOC的作者=客户） |
+| `author_name` | 作者姓名 | `custName` | 客户姓名（部分记录可能为空） |
+| `author_mobile` | 作者手机号 | `mediacode` | 媒体通道号码，实际通话的客户手机号 |
+| `author_province` | 作者省份 | `phoneAddress`（提取省份） | 从"广东 - 广州"中提取省份部分 |
+| `author_city` | 作者城市 | `phoneAddress`（提取城市） | 从"广东 - 广州"中提取城市部分 |
+| `like_count` | 点赞数 | — | 无对应，呼叫中心记录无社交互动指标，默认填 0 |
+| `reply_count` | 评论数 | — | 无对应，默认填 0 |
+| `repost_count` | 转发数 | — | 无对应，默认填 0 |
+| `view_count` | 浏览数 | — | 无对应，默认填 0 |
+| `share_count` | 分享/收藏数 | — | 无对应，默认填 0 |
+| `site_name` | 来源平台名 | `orgName` | 坐席所属机构（如"客服中心"） |
+| `voc_data_category` | 数据分类 | `service_archived` | 服务归档分类层级路径，可作为VOC数据分类 |
+| `voc_source_scope` | 数据公私域来源 | `contactSourceType` | 联络来源类型，1=热线渠道（私域） |
+| `wtype` | 文章发表类型 | `contactType` | 联络类型（1=电话），用于区分数据类型 |
+| `dt` | 数据日期分区 (yyyy-MM-dd) | `contactTime` | 从 contactTime 时间戳转换为 yyyy-MM-dd 格式 |
+| `source_channel` | 来源渠道 | `skillName` 或固定值 | 如"热线技能组"/"救援技能组"，或固定为 `sccc_contact_record` |
+
+### 映射逻辑说明
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ES (sccc_contact_record_2026)     →    MySQL (dwd_voc_data_info)│
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  contactId          ─────────────→  item_id                      │
+│  orgId              ─────────────→  org_id                       │
+│  callIdDsn          ─────────────→  mid                          │
+│  service_archived   ─────────────→  title                        │
+│  service_summary    ─────────────→  content                      │
+│  contactTime        ─────────────→  ctime (long timestamp)       │
+│  endTime            ─────────────→  utime (long timestamp)       │
+│  mediacode          ─────────────→  author_uid + author_mobile   │
+│  custName           ─────────────→  author_name                  │
+│  phoneAddress       ──(split)────→  author_province              │
+│  phoneAddress       ──(split)────→  author_city                  │
+│  orgName            ─────────────→  site_name                    │
+│  service_archived   ─────────────→  voc_data_category            │
+│  contactSourceType  ─────────────→  voc_source_scope             │
+│  contactType        ─────────────→  wtype                        │
+│  contactTime        ──(format)───→  dt (yyyy-MM-dd)              │
+│  skillName          ─────────────→  source_channel               │
+│  (none)             ─────────────→  like/reply/repost/view/      │
+│                                      share_count → default 0      │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 关键映射说明
+
+1. **`item_id` ← `contactId`**: `contactId` 是联络记录的唯一主键，格式为 `S` + 时间戳（yyyyMMddHHmmss）+ 序列号，全局唯一，适合作为 `item_id`。
+
+2. **`content` ← `service_summary`**: `service_summary` 是坐席填写的服务总结，包含客户咨询内容、解答方案、跟进情况等，是VOC数据的核心正文。
+
+3. **`title` ← `service_archived`**: `service_archived` 是多级分类路径（如 `产品/网联系统/网络使用异常/网络不稳定`），能概括问题类别，适合做标题。
+
+4. **`author_*` 指向客户而非坐席**: VOC 数据的"作者"应为发声的客户。`mediacode` 保存的是客户实际通话号码，`custName` 是客户姓名，`phoneAddress` 是客户号码归属地。
+
+5. **`ctime` / `utime` 使用毫秒时间戳**: ES 中 `contactTime` 和 `endTime` 均为 long 型毫秒时间戳，与 MySQL 的 `BIGINT` 类型一致，直接存储即可。
+
+6. **`dt` 日期分区**: 将 `contactTime` 毫秒时间戳转换为 `yyyy-MM-dd` 格式字符串，例如 `1778947853000` → `2026-05-17`。
+
+7. **社交互动指标无对应**: 呼叫中心数据没有点赞、评论、转发、浏览、分享等社交指标，这些字段填默认值 0。
+
+8. **`voc_source_scope` 取值**: `contactSourceType` 为 `1` 表示热线渠道，属于私域来源。
+
+---
+
+## 三、ES 实际数据中出现的字段（有值字段）
+
+10 条样本数据中实际有值的字段共 **46 个**：
+
+| 序号 | 字段名 | 必有值 | 备注 |
+|------|--------|--------|------|
+| 1 | agentCode | 是 | |
+| 2 | agentId | 是 | |
+| 3 | agentName | 是 | |
+| 4 | agentNo | 是 | |
+| 5 | answerTime | 是 | |
+| 6 | answerType | 是 | 全部为 "0" |
+| 7 | callIdDsn | 是 | |
+| 8 | callResult | 是 | 0/5/6 |
+| 9 | callTime | 是 | |
+| 10 | callType | 是 | 0/1 |
+| 11 | called | 是 | |
+| 12 | caller | 是 | |
+| 13 | cars_type | 是 | 部分为"其他" |
+| 14 | contactId | 是 | |
+| 15 | contactSourceType | 是 | 全部为 "1" |
+| 16 | contactTime | 是 | |
+| 17 | contactType | 是 | 全部为 "1" |
+| 18 | contactdirType | 是 | 0/1 |
+| 19 | customermood | 是 | |
+| 20 | endTime | 是 | |
+| 21 | endType | 是 | 2/3 |
+| 22 | folow_room | 是 | 可为空字符串 |
+| 23 | folow_status | 是 | |
+| 24 | idleTimeLength | 是 | |
+| 25 | ifconnected | 是 | 0/1 |
+| 26 | isScwf | 是 | 全部为 "0" |
+| 27 | is_supplement | 是 | 全部为 "否" |
+| 28 | locationId | 是 | |
+| 29 | loginId | 是 | |
+| 30 | mediacode | 是 | |
+| 31 | orgCode | 是 | 全部为 "11,16," |
+| 32 | orgId | 是 | 全部相同 |
+| 33 | orgName | 是 | 全部为 "客服中心" |
+| 34 | person_responsible | 是 | 可为空字符串 |
+| 35 | phoneAddress | 是 | |
+| 36 | recordname | 是 | |
+| 37 | ringTimeLength | 是 | |
+| 38 | service_archived | 是 | |
+| 39 | service_archived_code | 是 | |
+| 40 | service_status | 是 | 全部为 "已完成" |
+| 41 | service_summary | 是 | |
+| 42 | skillId | 是 | 1171/1154 |
+| 43 | skillName | 是 | |
+| 44 | surveyInfo | 是 | 全部为 "0" |
+| 45 | talkTimeLength | 是 | |
+| 46 | talkTimeTotal | 是 | |
+| 47 | tenantId | 是 | 全部相同 |
+| 48 | work_order_name | 是 | 全部为空字符串 |
+
+部分记录中出现的可选字段：`custName`, `satisfyClass`, `userButton`, `repeatcall`, `callbackTime`, `callbackName`, `callbackId`, `callbackState`。
+
+---
+
+## 四、补充说明
+
+### 4.1 数据类型注意事项
+
+ES mapping 中部分字段类型与实际存储值存在不一致：
+
+- `ringTimeLength` / `talkTimeLength` / `talkTimeTotal`: ES mapping 定义为 `long`，但实际数据中存为**字符串**（如 `"214"`），ETL 时需做类型转换。
+- `idleTimeLength`: ES mapping 定义为 `keyword`，存为字符串（如 `"30"`）。
+- `callTime`: ES mapping 定义为 `keyword`，实际存为毫秒时间戳字符串。
+
+### 4.2 已知拼写问题
+
+| 字段名 | 问题 | 正确拼写 |
+|--------|------|----------|
+| `certificationNober` | "Nober" 应为 "Number" | certificationNumber |
+| `moreinfomation` | "infomation" 应为 "information" | moreinformation |
+| `folow_room` / `folow_status` | "folow" 应为 "follow" | follow_room / follow_status |
+| `floowoption` / `floowresult` / `floowvalue` | "floow" 应为 "follow" | followoption / followresult / followvalue |
+
+### 4.3 MySQL 表中无对应字段的建议
+
+MySQL 表 `dwd_voc_data_info` 是一个通用的 VOC 数据宽表，部分社交互动字段（如点赞、评论、转发等）在呼叫中心场景下无意义，建议：
+- 数值类字段（like_count, reply_count 等）默认填 `0`
+- 不予新增 ES 特有字段到 MySQL 表中，保持表结构通用性
