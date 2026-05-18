@@ -1,0 +1,27 @@
+CREATE TABLE IF NOT EXISTS dwd_voc_data_info (
+    item_id              VARCHAR(128) COMMENT 'item_id',
+    org_id               VARCHAR(128) COMMENT '原始id',
+    mid                  VARCHAR(128) COMMENT 'id',
+    title                TEXT COMMENT '标题',
+    content              TEXT COMMENT '正文',
+    ctime                BIGINT COMMENT '创建时间',
+    utime                BIGINT COMMENT '修改时间',
+    author_uid           VARCHAR(64) COMMENT '作者id',
+    author_name          VARCHAR(100) COMMENT '作者姓名',
+    author_mobile        VARCHAR(20) COMMENT '作者手机号',
+    author_province      VARCHAR(50) COMMENT '作者省份',
+    author_city          VARCHAR(50) COMMENT '作者城市',
+    like_count           BIGINT COMMENT '点赞数',
+    reply_count          BIGINT COMMENT '评论数',
+    repost_count         BIGINT COMMENT '转发数',
+    view_count           BIGINT COMMENT '浏览数',
+    share_count          BIGINT COMMENT '分享/收藏数',
+    site_name            VARCHAR(100) COMMENT '来源平台名',
+    voc_data_category    VARCHAR(100) COMMENT '数据分类',
+    voc_source_scope     VARCHAR(50) COMMENT '数据公私域来源',
+    wtype                BIGINT COMMENT '文章发表类型',
+    dt                   VARCHAR(20) COMMENT '数据日期分区, 格式yyyy-MM-dd',
+    source_channel       VARCHAR(100) COMMENT '来源渠道, 对应ODS源表名',
+    
+    PRIMARY KEY (item_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='VOC私域数据明细宽表';
